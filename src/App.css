@@ -1,0 +1,226 @@
+/* ===== Batalla Naval — océano azul, tablero de cristal y botones amarillos ===== */
+:root {
+  /* Océano */
+  --mar-superficie: #00d9ff;
+  --mar-medio: #1a86dc;
+  --mar-hondo: #0a4a9e;
+  --mar-abismo: #031f4d;
+  /* Tablero */
+  --agua: #135fa8;
+  --linea: #4a8fd4;
+  --etiqueta: #5b9bd8;
+  --borde-tablero: #3d83cc;
+  /* Interfaz */
+  --pildora: #0b4a86;
+  --boton-claro: #ffe84a;
+  --boton-oscuro: #ffb800;
+  --boton-base: #d98200;
+  --boton-texto: #8a3b00;
+  --impacto: rgba(226, 48, 36, 0.62);
+  --fallo: rgba(2, 22, 64, 0.5);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: #fff;
+  font-family: "Oswald", "Arial Narrow", system-ui, sans-serif;
+  font-stretch: 75%;
+  font-weight: 700;
+  background: linear-gradient(180deg, var(--mar-superficie) 0%, var(--mar-medio) 32%, var(--mar-hondo) 68%, var(--mar-abismo) 100%) fixed;
+}
+
+.app { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; text-align: center; }
+
+h1 {
+  display: inline-block;
+  margin: 0 0 20px;
+  padding: 8px 34px;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  font-weight: 800;
+  background: var(--pildora);
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(0, 25, 70, 0.35);
+}
+
+/* ----- Paneles ----- */
+.panel { padding: 0; }
+.panel.centrado {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 24px;
+  background: rgba(3, 31, 77, 0.6);
+  border: 2px solid rgba(122, 182, 240, 0.35);
+  border-radius: 24px;
+  box-shadow: 0 14px 30px rgba(0, 20, 60, 0.4);
+}
+.ayuda { margin: 6px 0 14px; opacity: 0.9; font-weight: 600; }
+
+/* Cabecera en forma de píldora (título + indicaciones) */
+.pildora {
+  display: inline-block;
+  max-width: 680px;
+  margin-bottom: 26px;
+  padding: 10px 36px 12px;
+  background: var(--pildora);
+  border-radius: 34px;
+  box-shadow: 0 6px 16px rgba(0, 25, 70, 0.35);
+}
+.pildora h2 { margin: 0; font-size: 1.7rem; font-weight: 800; }
+.pildora p { margin: 2px 0 0; font-size: 1rem; font-weight: 700; opacity: 0.95; }
+
+h2 { margin: 0 0 8px; font-weight: 800; }
+
+/* ----- Tablero ----- */
+.tablero-contenedor h3 {
+  margin: 0 0 14px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-shadow: 0 2px 6px rgba(0, 30, 80, 0.55);
+}
+
+.tablero {
+  --tam-casilla: clamp(38px, 9vw, 58px);
+  display: inline-grid;
+  grid-template-columns: repeat(7, var(--tam-casilla));
+  grid-auto-rows: var(--tam-casilla);
+  position: relative;
+  background: var(--agua);
+  /* canto del tablero + sombra sobre el mar */
+  box-shadow: 7px 7px 0 var(--borde-tablero), 15px 17px 28px rgba(0, 20, 60, 0.5);
+}
+
+.etiqueta {
+  display: grid;
+  place-items: center;
+  background: var(--etiqueta);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+.etiqueta.esquina { background: #7ab6f0; }
+
+.casilla {
+  position: relative;
+  z-index: 2; /* por encima de los PNG para recibir los clics */
+  padding: 0;
+  border: 1px solid var(--linea);
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 1.35rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.casilla:hover:not(:disabled):not(.disparada) { background: rgba(255, 255, 255, 0.22); }
+.casilla:disabled { cursor: default; }
+.casilla:focus-visible { outline: 3px solid var(--boton-claro); outline-offset: -3px; }
+.casilla.impacto { background: var(--impacto); }
+.casilla.agua { background: var(--fallo); color: #bfe1ff; }
+.casilla.disparada { cursor: not-allowed; }
+.casilla.previa-ok { background: rgba(60, 214, 120, 0.3); }
+.casilla.previa-mala { background: rgba(255, 140, 40, 0.6); }
+
+/* ----- Barcos (PNG) -----
+   El PNG se dibuja en vertical con la proa arriba; en horizontal se gira 90°. */
+.barco { position: relative; z-index: 1; pointer-events: none; }
+.barco img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgba(0, 20, 60, 0.55));
+}
+.barco.vertical img { width: 100%; height: 100%; transform: translate(-50%, -50%); }
+.barco.horizontal img {
+  width: var(--tam-casilla);
+  height: calc(var(--tam-casilla) * var(--largo));
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+.barco.previa { opacity: 0.6; }
+
+/* ----- Disposición de las pantallas ----- */
+.disposicion-preparacion, .disposicion-batalla {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px 56px;
+  justify-content: center;
+  align-items: flex-start;
+}
+.disposicion-batalla { padding-right: 14px; }
+.controles { display: flex; flex-direction: column; gap: 16px; min-width: 240px; padding-top: 6px; }
+
+/* ----- Botones amarillos ----- */
+.btn {
+  padding: 12px 26px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(var(--boton-claro), var(--boton-oscuro));
+  color: var(--boton-texto);
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6), 0 5px 0 var(--boton-base), 0 9px 14px rgba(0, 30, 80, 0.4);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.btn:hover:not(:disabled) { filter: brightness(1.05); }
+.btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6), 0 2px 0 var(--boton-base), 0 4px 8px rgba(0, 30, 80, 0.4);
+}
+.btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.btn.activo {
+  background: linear-gradient(#fff7b0, #ffd84a);
+  box-shadow: 0 0 0 4px #fff, inset 0 2px 0 rgba(255, 255, 255, 0.6), 0 5px 0 var(--boton-base), 0 9px 14px rgba(0, 30, 80, 0.4);
+}
+.btn.principal { margin-top: 10px; font-size: 1.35rem; padding: 14px 30px; }
+.btn:disabled {
+  cursor: not-allowed;
+  filter: saturate(0.35) brightness(0.9);
+  opacity: 0.6;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 5px 0 #9a8a60;
+}
+
+/* ----- Estado de la batalla ----- */
+.estado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  max-width: 680px;
+  margin: 0 auto 14px;
+  padding: 10px 32px;
+  background: var(--pildora);
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(0, 25, 70, 0.35);
+}
+.estado h2 { margin: 0; font-size: 1.5rem; }
+.temporizador { font-size: 1.5rem; font-weight: 800; color: var(--boton-claro); }
+.temporizador.alerta { color: #ff7b6b; animation: parpadeo 1s infinite; }
+@keyframes parpadeo { 50% { opacity: 0.4; } }
+@media (prefers-reduced-motion: reduce) { .temporizador.alerta { animation: none; } }
+
+.mensaje {
+  max-width: 680px;
+  margin: 0 auto 30px;
+  padding: 10px 18px;
+  border-radius: 16px;
+  background: rgba(3, 31, 77, 0.55);
+  font-size: 1.1rem;
+}
+.mensaje.impacto { background: rgba(190, 35, 28, 0.85); }
+.mensaje.agua { background: rgba(2, 22, 64, 0.75); }
+.error { margin: 0; color: #ffe08a; font-weight: 700; text-shadow: 0 1px 4px rgba(0, 30, 80, 0.6); }
+
+/* ----- Relevo y fin ----- */
+.informe { list-style: none; padding: 0; margin: 14px 0; }
+.informe li { margin: 8px 0; padding: 10px 14px; background: rgba(3, 31, 77, 0.55); border-radius: 14px; }
+.informe li.impacto { background: rgba(190, 35, 28, 0.85); font-weight: 800; }
+
+.resultado { margin: 14px 0; padding: 16px; border-radius: 18px; font-size: 1.4rem; font-weight: 800; }
+.resultado.victoria { background: #1e8a50; box-shadow: 0 5px 0 #146236; }
+.resultado.derrota { background: #8a2a2a; box-shadow: 0 5px 0 #5f1c1c; }
